@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+  },
+  "include": [
+    "./**/*.ts",
+    "./*.ts",
+    "typings"
+  ],
+  "exclude": [
+    "node_modules",
+    "packages",
+    "wwwroot",
+    "dist"
+  ]
+}

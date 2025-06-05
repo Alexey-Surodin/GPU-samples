@@ -1,0 +1,24 @@
+{
+  "name": "gpu-samples",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "build": "webpack",
+    "lint": "eslint"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "@eslint/js": "^9.26.0",
+    "@webgpu/types": "^0.1.60",
+    "copy-webpack-plugin": "^13.0.0",
+    "eslint": "^9.26.0",
+    "globals": "^16.1.0",
+    "ts-loader": "^9.5.2",
+    "typescript": "^5.8.2",
+    "typescript-eslint": "^8.32.1",
+    "webpack": "^5.98.0",
+    "webpack-cli": "^6.0.1"
+  }
+}
