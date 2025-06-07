@@ -2,6 +2,7 @@
 
 import { runJulia, runMandelbroth } from "./fractals/fractals";
 import { runConwayGameC } from "./game/game";
+import { runConwayGameF } from "./gameConwayFragment/game";
 import { runParticles } from "./particlesCompute/particles";
 
 const activeTab = {
@@ -16,6 +17,7 @@ function init() {
     return;
 
   addGameOfLifeButton(toolbar);
+  addGameOfLifeFragmentButton(toolbar);
   addMandelbrothButton(toolbar);
   addJuliaButton(toolbar);
   addParticlesButton(toolbar);
@@ -29,6 +31,19 @@ function addGameOfLifeButton(contentDiv: HTMLDivElement): void {
     activeTab.stop();
     activeTab.title = 'game of life';
     activeTab.stop = await runConwayGameC();
+  };
+
+  contentDiv.appendChild(button);
+}
+
+function addGameOfLifeFragmentButton(contentDiv: HTMLDivElement): void {
+  const button = document.createElement('button');
+  button.innerHTML = "game of life F ";
+
+  button.onclick = async () => {
+    activeTab.stop();
+    activeTab.title = 'game of life';
+    activeTab.stop = await runConwayGameF();
   };
 
   contentDiv.appendChild(button);
