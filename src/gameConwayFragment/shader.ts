@@ -38,8 +38,10 @@ const shaderCode = `
 
     @fragment
     fn fragmentMain( @builtin(position) fragCoord: vec4f ) -> @location(0) vec4f {
-      let s = state(fragCoord.xy, vec2f(options.width, options.height));
-      return vec4f(s, s, s, 1);
+      let size = vec2f(options.width, options.height);
+      let s = state(fragCoord.xy, size);
+      let c = fragCoord.xy / size;
+      return vec4f(s, c.x * s, s * (1.0 - c.x), s);
     }
 `
 

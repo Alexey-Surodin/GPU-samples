@@ -1,7 +1,7 @@
 /// <reference types="@webgpu/types" />
 
 import { runJulia, runMandelbroth } from "./fractals/fractals";
-import { runConwayGameC } from "./game/game";
+import { runConwayGameC } from "./gameConwayCompute/game";
 import { runConwayGameF } from "./gameConwayFragment/game";
 import { runParticles } from "./particlesCompute/particles";
 
