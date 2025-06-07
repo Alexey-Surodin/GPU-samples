@@ -97,7 +97,7 @@ export class MandelbrothShader extends Shader {
       bufferType: 'uniform'
     });
 
-    this.uniforms.push(this.uniform);
+    this.resources.push(this.uniform);
 
     this.offset = options.offset ?? { x: -1.5, y: 0 };
     this.scale = options.scale ?? 10;

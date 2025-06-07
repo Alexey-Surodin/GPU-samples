@@ -82,7 +82,7 @@ export class JuliaShader extends Shader {
       bufferType: 'uniform'
     });
 
-    this.uniforms.push(this.uniform);
+    this.resources.push(this.uniform);
 
     this.offset = options.offset ?? { x: 0, y: 0 };
     this.scale = options.scale ?? 1;

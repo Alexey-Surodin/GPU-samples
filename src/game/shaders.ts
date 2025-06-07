@@ -75,7 +75,7 @@ export class CellShader extends Shader {
       bufferType: 'storage'
     });
 
-    this.uniforms = [this.uniform, this.cellStorageA, this.cellStorageB];
+    this.resources = [this.uniform, this.cellStorageA, this.cellStorageB];
 
     this.initStorage();
   }
@@ -88,9 +88,9 @@ export class CellShader extends Shader {
   }
 
   swapBuffers(): void {
-    const t = this.cellStorageA.buffer;
-    this.cellStorageA.buffer = this.cellStorageB.buffer;
-    this.cellStorageB.buffer = t;
+    const t = this.cellStorageA.resource;
+    this.cellStorageA.resource = this.cellStorageB.resource;
+    this.cellStorageB.resource = t;
   }
 }
 
@@ -142,6 +142,6 @@ const computeShaderCode = (workgroupSize: number) => `
 export class ComputeShader extends Shader {
   constructor(workgroupSize: number, cellShader: CellShader) {
     super(computeShaderCode(workgroupSize));
-    this.uniforms = cellShader.uniforms;
+    this.resources = cellShader.resources;
   }
 }

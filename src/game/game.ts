@@ -7,7 +7,7 @@ import { getGeometry } from "../utils";
 const WORKGROUP_SIZE = 8;
 const UPDATE_INTERVAL = 200;
 
-export function runGame(gridSize: number = 64): Promise<StopFunc> {
+export function runConwayGameC(gridSize: number = 64): Promise<StopFunc> {
 
   const cellShader = new CellShader(gridSize);
   const computeShader = new ComputeShader(WORKGROUP_SIZE, cellShader);
@@ -15,13 +15,8 @@ export function runGame(gridSize: number = 64): Promise<StopFunc> {
   const geometry = getGeometry(cellShader);
   geometry.instanceCount = gridSize * gridSize;
 
-  const updateCallback = (device: GPUDevice) => {
-    const encoder = device.createCommandEncoder();
-
+  const updateCallback = (device: GPUDevice, context: GPUCanvasContext, encoder: GPUCommandEncoder) => {
     runComputePass(encoder, device, computeShader, { x: workgroupCount, y: workgroupCount });
-
-    device.queue.submit([encoder.finish()]);
-
     cellShader.swapBuffers();
   }
 

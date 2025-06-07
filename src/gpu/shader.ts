@@ -1,38 +1,5 @@
-import { TypedArray } from "./gpu";
-
-export type UniformOptions = {
-  array: TypedArray,
-  binding: number,
-  visibility: GPUShaderStage[keyof (GPUShaderStage)],
-  usage: GPUBufferUsage[keyof (GPUBufferUsage)],
-  label?: string,
-  bufferType?: GPUBufferBindingType,
-}
-
-export class Uniform {
-  options: Required<UniformOptions>;
-
-  buffer: GPUBuffer | null = null;
-  layout: GPUBindGroupLayoutEntry | null = null;
-  needsUpdate: boolean = false;
-
-  constructor(options: UniformOptions) {
-    this.options = {
-      array: options.array,
-      binding: options.binding,
-      visibility: options.visibility,
-      usage: options.usage,
-      label: options.label ?? '',
-      bufferType: options.bufferType ?? 'uniform',
-    };
-  }
-
-  dispose(): void {
-    this.buffer?.destroy();
-    this.buffer = null;
-    this.layout = null;
-  }
-}
+import { Resource, Uniform } from "./resource";
+export { Uniform };
 
 export class Shader {
 
@@ -43,10 +10,9 @@ export class Shader {
   vertexEntryPoint = 'vertexMain';
   fragmentEntryPoint = 'fragmentMain';
   computeEntryPoint = 'computeMain';
-  uniforms: Uniform[] = [];
+  resources: Resource<GPUBindingResource>[] = [];
 
   constructor(code?: string) {
-
     this.code = code ?? `
     @vertex
     fn vertexMain(@location(0) position: vec2f) -> @builtin(position) vec4f {
@@ -68,72 +34,44 @@ export class Shader {
 
     return this.shaderModule;
   }
+
+  dispose(): void {
+    for (let i = 0; i < this.resources.length; i++)
+      this.resources[i].dispose();
+
+    this.resources = [];
+    this.shaderModule = null;
+  }
 }
 
-export function prepareUniform(device: GPUDevice, uniform: Uniform): { layout: GPUBindGroupLayoutEntry, buffer: GPUBuffer } {
-  if (uniform.buffer && uniform.layout) {
-    if (uniform.needsUpdate) {
-      device.queue.writeBuffer(uniform.buffer, 0, uniform.options.array);
-      uniform.needsUpdate = false;
-    }
-    return { layout: uniform.layout, buffer: uniform.buffer }
-  }
+export function prepareShaderBindGroup(device: GPUDevice, shader: Shader): { layout: GPUBindGroupLayout, bindGroup: GPUBindGroup } {
+  const layoutEntries: GPUBindGroupLayoutEntry[] = [];
+  const bindEntries: GPUBindGroupEntry[] = [];
 
-  if (!uniform.buffer) {
-    const options = uniform.options;
-    const array = options.array;
-    const gpuBuffer = device.createBuffer({
-      label: options.label,
-      size: array.byteLength,
-      usage: options.usage,
-    });
-
-    device.queue.writeBuffer(gpuBuffer, 0, array);
-    uniform.buffer = gpuBuffer;
-  }
-
-  if (!uniform.layout) {
-    const bufferLayout: GPUBindGroupLayoutEntry = {
-      binding: uniform.options.binding,
-      visibility: uniform.options.visibility,
-      buffer: { type: uniform.options.bufferType }
-    };
-
-    uniform.layout = bufferLayout;
-  }
-
-  return { layout: uniform.layout, buffer: uniform.buffer }
-}
-
-export function prepareShaderBindGroup( device: GPUDevice, shader: Shader): { layout: GPUBindGroupLayout, bindGroup: GPUBindGroup } {
-  const uniformLayoutEntries: GPUBindGroupLayoutEntry[] = [];
-  const uniformBindEntries: GPUBindGroupEntry[] = [];
-
-  for (const uniform of shader.uniforms) {
-    const { layout, buffer } = prepareUniform(device, uniform);
-    uniformLayoutEntries.push(layout);
-    uniformBindEntries.push({
+  for (const res of shader.resources) {
+    const { layout, resource } = res.update(device);
+    layoutEntries.push(layout);
+    bindEntries.push({
       binding: layout.binding,
-      resource: { buffer: buffer },
+      resource: resource,
     });
   }
 
   const layout = device.createBindGroupLayout({
     label: shader.label + "uniform layout",
-    entries: uniformLayoutEntries,
+    entries: layoutEntries,
   });
 
   const bindGroup = device.createBindGroup({
     label: shader.label + "bind group",
     layout: layout,
-    entries: uniformBindEntries,
+    entries: bindEntries,
   });
 
   return { layout, bindGroup };
 }
 
 export function prepareShader(device: GPUDevice, shader: Shader): { shaderModule: GPUShaderModule, layout: GPUBindGroupLayout, bindGroup: GPUBindGroup } {
-
   const shaderModule = shader.shaderModule ?? shader.compile(device);
   const { layout, bindGroup } = prepareShaderBindGroup(device, shader);
   return { shaderModule, layout, bindGroup }

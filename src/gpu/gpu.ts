@@ -34,7 +34,7 @@ async function getGpuAdapter(): Promise<GPUAdapter> {
   return adapter;
 }
 
-export async function prepareGpu(): Promise<{ device: GPUDevice, context: GPUCanvasContext }> {
+export async function prepareGpu(config?: Partial<GPUCanvasConfiguration>): Promise<{ device: GPUDevice, context: GPUCanvasContext }> {
   const canvas = await getCanvas();
   const context = canvas.getContext('webgpu');
   if (!context)
@@ -44,10 +44,8 @@ export async function prepareGpu(): Promise<{ device: GPUDevice, context: GPUCan
   const device = await adapter.requestDevice();
 
   const canvasFormat = navigator.gpu.getPreferredCanvasFormat();
-  context.configure({
-    device: device,
-    format: canvasFormat,
-  });
+  const c: GPUCanvasConfiguration = { device: device, format: canvasFormat };
+  context.configure(Object.assign(c, config));
 
   return { device, context };
 }
@@ -120,8 +118,8 @@ export function runComputePass(encoder: GPUCommandEncoder, device: GPUDevice, sh
   computePass.end();
 }
 
-export async function runRenderLoop(geometry: Geometry, delay: number, onFrameCallback?: (device: GPUDevice, context: GPUCanvasContext) => void, onStopCallback?: (device: GPUDevice, context: GPUCanvasContext) => void): Promise<StopFunc> {
-  const { device, context } = await prepareGpu();
+export async function runRenderLoop(geometry: Geometry, delay: number, onFrameCallback?: (device: GPUDevice, context: GPUCanvasContext, encoder: GPUCommandEncoder) => void, onStopCallback?: (device: GPUDevice, context: GPUCanvasContext) => void, config?: Partial<GPUCanvasConfiguration>): Promise<StopFunc> {
+  const { device, context } = await prepareGpu(config);
 
   const intervalId = setInterval(() => {
     const encoder = device.createCommandEncoder();
@@ -140,11 +138,10 @@ export async function runRenderLoop(geometry: Geometry, delay: number, onFrameCa
 
     runRenderPass(encoder, renderPassDescriptor, device, texture.format, geometry);
 
-    device.queue.submit([encoder.finish()]);
-
     if (onFrameCallback)
-      onFrameCallback(device, context);
+      onFrameCallback(device, context, encoder);
 
+    device.queue.submit([encoder.finish()]);
   }, delay);
 
   const stop = () => {

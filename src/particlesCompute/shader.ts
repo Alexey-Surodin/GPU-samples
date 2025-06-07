@@ -97,7 +97,7 @@ export class ParticleComputeShader extends Shader {
     });
 
 
-    this.uniforms = [this.uniformOptions, this.particlesA, this.particlesB];
+    this.resources = [this.uniformOptions, this.particlesA, this.particlesB];
 
     this.areaHeight = options.areaHeight;
     this.areaWidth = options.areaWidth;
@@ -147,9 +147,9 @@ export class ParticleComputeShader extends Shader {
   }
 
   swapBuffers(): void {
-    const t = this.particlesA.buffer;
-    this.particlesA.buffer = this.particlesB.buffer;
-    this.particlesB.buffer = t;
+    const t = this.particlesA.resource;
+    this.particlesA.resource = this.particlesB.resource;
+    this.particlesB.resource = t;
   }
 }
 
@@ -194,6 +194,6 @@ export class ParticleRenderShader extends Shader {
   constructor(computeShader: ParticleComputeShader) {
     super(renderShaderCode);
 
-    this.uniforms = computeShader.uniforms;
+    this.resources = computeShader.resources;
   }
 }

@@ -1,7 +1,7 @@
 /// <reference types="@webgpu/types" />
 
 import { runJulia, runMandelbroth } from "./fractals/fractals";
-import { runGame } from "./game/game";
+import { runConwayGameC } from "./game/game";
 import { runParticles } from "./particlesCompute/particles";
 
 const activeTab = {
@@ -28,7 +28,7 @@ function addGameOfLifeButton(contentDiv: HTMLDivElement): void {
   button.onclick = async () => {
     activeTab.stop();
     activeTab.title = 'game of life';
-    activeTab.stop = await runGame();
+    activeTab.stop = await runConwayGameC();
   };
 
   contentDiv.appendChild(button);
@@ -73,10 +73,4 @@ function addParticlesButton(contentDiv: HTMLDivElement): void {
   contentDiv.appendChild(button);
 }
 
-
-const f = async () => {
-  activeTab.stop = await runParticles();
-}
-
 init();
-f();
