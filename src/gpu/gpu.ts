@@ -14,7 +14,7 @@ export type TypedArray =
   | Float32Array
   | Float64Array;
 
-async function getCanvas(id?: string): Promise<HTMLCanvasElement> {
+export async function getCanvas(id?: string): Promise<HTMLCanvasElement> {
   const canvas = id ? document.getElementById(id) as HTMLCanvasElement : document.querySelector("canvas");
   if (!canvas) {
     throw new Error("Failed to get canvas.");

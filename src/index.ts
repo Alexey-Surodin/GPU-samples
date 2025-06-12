@@ -3,7 +3,9 @@
 import { runJulia, runMandelbroth } from "./fractals/fractals";
 import { runConwayGameC } from "./gameConwayCompute/game";
 import { runConwayGameF } from "./gameConwayFragment/game";
-import { runParticles } from "./particlesCompute/particles";
+import { ParticleSystem } from "./particlesCompute/particles";
+
+const particleSystem = new ParticleSystem();
 
 const activeTab = {
   title: '',
@@ -82,7 +84,8 @@ function addParticlesButton(contentDiv: HTMLDivElement): void {
   button.onclick = async () => {
     activeTab.stop();
     activeTab.title = 'Particles';
-    activeTab.stop = await runParticles();
+    await particleSystem.run();
+    activeTab.stop = () => particleSystem.stop();
   };
 
   contentDiv.appendChild(button);
