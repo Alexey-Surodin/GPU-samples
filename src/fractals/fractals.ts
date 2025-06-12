@@ -22,6 +22,7 @@ export function runMandelbroth(): Promise<StopFunc> {
 
   const stopCallback = () => {
     geometry.dispose();
+    mandelbrothShader.dispose();
   }
 
   return runRenderLoop(geometry, updateCallback, stopCallback);
@@ -40,6 +41,7 @@ export function runJulia(): Promise<StopFunc> {
 
   const stopCallback = () => {
     geometry.dispose();
+    juliaShader.dispose();
   }
 
   return runRenderLoop(geometry, updateCallback, stopCallback);

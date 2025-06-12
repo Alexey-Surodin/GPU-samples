@@ -21,6 +21,8 @@ export function runConwayGameC(gridSize: number = 1024): Promise<StopFunc> {
 
   const stopCallback = () => {
     geometry.dispose();
+    cellShader.dispose();
+    computeShader.dispose();
   }
 
   return runRenderLoop(geometry, updateCallback, stopCallback);
