@@ -3,92 +3,38 @@
 import { runJulia, runMandelbroth } from "./fractals/fractals";
 import { runConwayGameC } from "./gameConwayCompute/game";
 import { runConwayGameF } from "./gameConwayFragment/game";
-import { ParticleSystem } from "./particlesCompute/particles";
+import { runParticles } from "./particlesCompute/particles";
+import { StopFunc } from "./gpu/gpu";
+import { GUI } from 'lil-gui';
 
-const particleSystem = new ParticleSystem();
-
-const activeTab = {
-  title: '',
-  stop: () => { },
+type Tab = {
+  stop?: StopFunc,
+} & {
+  [key: string]: () => any | undefined,
 }
+
+const gui = new GUI();
+const tabs: Tab[] = [];
+
 
 function init() {
-  const toolbar = document.getElementById('toolbar') as HTMLDivElement;
 
-  if (!toolbar)
-    return;
-
-  addGameOfLifeButton(toolbar);
-  addGameOfLifeFragmentButton(toolbar);
-  addMandelbrothButton(toolbar);
-  addJuliaButton(toolbar);
-  addParticlesButton(toolbar);
+  addButton('Conway on compute shader', () => runConwayGameC());
+  addButton('Conway on fragment shader', () => runConwayGameF());
+  addButton('Mandelbroth', () => runMandelbroth());
+  addButton('Julia', () => runJulia());
+  addButton('Particles', () => runParticles(gui));
 }
 
-function addGameOfLifeButton(contentDiv: HTMLDivElement): void {
-  const button = document.createElement('button');
-  button.innerHTML = "game of life";
-
-  button.onclick = async () => {
-    activeTab.stop();
-    activeTab.title = 'game of life';
-    activeTab.stop = await runConwayGameC();
+function addButton(key: string, onClick: () => Promise<StopFunc>): void {
+  const tab: Tab = {
+    [key]: async () => {
+      tabs.forEach(tab => tab?.stop?.apply(tab));
+      tab.stop = await onClick();
+    }
   };
-
-  contentDiv.appendChild(button);
-}
-
-function addGameOfLifeFragmentButton(contentDiv: HTMLDivElement): void {
-  const button = document.createElement('button');
-  button.innerHTML = "game of life F ";
-
-  button.onclick = async () => {
-    activeTab.stop();
-    activeTab.title = 'game of life';
-    activeTab.stop = await runConwayGameF();
-  };
-
-  contentDiv.appendChild(button);
-}
-
-function addMandelbrothButton(contentDiv: HTMLDivElement): void {
-  const button = document.createElement('button');
-  button.innerHTML = "Mandelbroth";
-
-  button.onclick = async () => {
-    activeTab.stop();
-    activeTab.title = 'Mandelbroth';
-    activeTab.stop = await runMandelbroth();
-  };
-
-  contentDiv.appendChild(button);
-}
-
-function addJuliaButton(contentDiv: HTMLDivElement): void {
-  const button = document.createElement('button');
-  button.innerHTML = "Julia";
-
-  button.onclick = async () => {
-    activeTab.stop();
-    activeTab.title = 'Julia';
-    activeTab.stop = await runJulia();
-  };
-
-  contentDiv.appendChild(button);
-}
-
-function addParticlesButton(contentDiv: HTMLDivElement): void {
-  const button = document.createElement('button');
-  button.innerHTML = "Particles";
-
-  button.onclick = async () => {
-    activeTab.stop();
-    activeTab.title = 'Particles';
-    await particleSystem.run();
-    activeTab.stop = () => particleSystem.stop();
-  };
-
-  contentDiv.appendChild(button);
+  tabs.push(tab);
+  gui.add(tab, key);
 }
 
 init();

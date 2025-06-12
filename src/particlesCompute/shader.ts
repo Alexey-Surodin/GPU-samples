@@ -193,8 +193,7 @@ export type ParticleShaderOptions = {
 
 type UniformOptionKeys = keyof typeof UniformOptionsOffset;
 
-
-export class ParticleComputeShader extends Shader {
+export class ParticleShader extends Shader {
 
   uniformOptions: Uniform;
   particlesA: Uniform;
@@ -264,14 +263,5 @@ export class ParticleComputeShader extends Shader {
     const t = this.particlesA.resource;
     this.particlesA.resource = this.particlesB.resource;
     this.particlesB.resource = t;
-  }
-}
-
-export class ParticleRenderShader extends Shader {
-
-  constructor(computeShader: ParticleComputeShader) {
-    super(shaderCode);
-
-    this.resources = computeShader.resources;
   }
 }
