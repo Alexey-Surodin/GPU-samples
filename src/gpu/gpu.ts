@@ -118,10 +118,10 @@ export function runComputePass(encoder: GPUCommandEncoder, device: GPUDevice, sh
   computePass.end();
 }
 
-export async function runRenderLoop(geometry: Geometry, delay: number, onFrameCallback?: (device: GPUDevice, context: GPUCanvasContext, encoder: GPUCommandEncoder) => void, onStopCallback?: (device: GPUDevice, context: GPUCanvasContext) => void, config?: Partial<GPUCanvasConfiguration>): Promise<StopFunc> {
+export async function runRenderLoop(geometry: Geometry, onFrameCallback?: (device: GPUDevice, context: GPUCanvasContext, encoder: GPUCommandEncoder) => void, onStopCallback?: (device: GPUDevice, context: GPUCanvasContext) => void, config?: Partial<GPUCanvasConfiguration>): Promise<StopFunc> {
   const { device, context } = await prepareGpu(config);
 
-  const intervalId = setInterval(() => {
+  const frame = () => {
     const encoder = device.createCommandEncoder();
     const texture = context.getCurrentTexture();
 
@@ -142,10 +142,13 @@ export async function runRenderLoop(geometry: Geometry, delay: number, onFrameCa
       onFrameCallback(device, context, encoder);
 
     device.queue.submit([encoder.finish()]);
-  }, delay);
+    frameHandle = requestAnimationFrame(frame);
+  };
+
+  let frameHandle = requestAnimationFrame(frame);
 
   const stop = () => {
-    clearInterval(intervalId);
+    cancelAnimationFrame(frameHandle);
 
     if (onStopCallback)
       onStopCallback(device, context);

@@ -5,7 +5,6 @@ import { GUI } from 'lil-gui';
 
 const NUM_PARTICLES = 2000;
 const WORKGROUP_COUNT = 64;
-const UPDATE_INTERVAL = 2;
 
 export class ParticleSystem {
   private _boundOnMouseMove = this.onMouseMove.bind(this);
@@ -49,7 +48,7 @@ export class ParticleSystem {
       computeShader.swapBuffers();
     }
 
-    this.stopLoop = await runRenderLoop(geometry, UPDATE_INTERVAL, updateCallback, () => geometry.dispose());
+    this.stopLoop = await runRenderLoop(geometry, updateCallback, () => geometry.dispose());
   }
 
   async stop(): Promise<void> {

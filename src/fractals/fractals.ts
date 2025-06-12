@@ -3,8 +3,6 @@ import { getGeometry, getIndexedGeometry } from "../utils";
 import { JuliaShader } from "./julia";
 import { MandelbrothShader } from "./mandelbroth";
 
-const UPDATE_INTERVAL = 20;
-
 export function runMandelbroth(): Promise<StopFunc> {
   const mandelbrothShader = new MandelbrothShader({ scale: 0.1 });
   const geometry = getIndexedGeometry(mandelbrothShader);
@@ -26,7 +24,7 @@ export function runMandelbroth(): Promise<StopFunc> {
     geometry.dispose();
   }
 
-  return runRenderLoop(geometry, UPDATE_INTERVAL, updateCallback, stopCallback);
+  return runRenderLoop(geometry, updateCallback, stopCallback);
 }
 
 export function runJulia(): Promise<StopFunc> {
@@ -44,5 +42,5 @@ export function runJulia(): Promise<StopFunc> {
     geometry.dispose();
   }
 
-  return runRenderLoop(geometry, UPDATE_INTERVAL, updateCallback, stopCallback);
+  return runRenderLoop(geometry, updateCallback, stopCallback);
 }

@@ -5,7 +5,6 @@ import { CellShader, ComputeShader } from "./shaders";
 import { getGeometry } from "../utils";
 
 const WORKGROUP_SIZE = 8;
-const UPDATE_INTERVAL = 20;
 
 export function runConwayGameC(gridSize: number = 1024): Promise<StopFunc> {
 
@@ -24,5 +23,5 @@ export function runConwayGameC(gridSize: number = 1024): Promise<StopFunc> {
     geometry.dispose();
   }
 
-  return runRenderLoop(geometry, UPDATE_INTERVAL, updateCallback, stopCallback);
+  return runRenderLoop(geometry, updateCallback, stopCallback);
 }

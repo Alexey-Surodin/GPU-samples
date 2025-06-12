@@ -2,8 +2,6 @@ import { prepareGpu, runRenderLoop, StopFunc } from "../gpu/gpu";
 import { getGeometry } from "../utils";
 import { ParticleFragmentShader } from "./shader";
 
-const UPDATE_INTERVAL = 20;
-
 export async function runConwayGameF(): Promise<StopFunc> {
   const { context } = await prepareGpu({ usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC });
   const canvasTexture = context.getCurrentTexture();
@@ -46,5 +44,5 @@ export async function runConwayGameF(): Promise<StopFunc> {
 
   const canvasConfig = { usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC };
 
-  return runRenderLoop(geometry, UPDATE_INTERVAL, onFrameCallback, onStopCallback, canvasConfig);
+  return runRenderLoop(geometry, onFrameCallback, onStopCallback, canvasConfig);
 }
