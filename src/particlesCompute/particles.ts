@@ -23,9 +23,9 @@ export async function runParticles(gui: GUI): Promise<StopFunc> {
     workgroupCount: WORKGROUP_COUNT,
   };
 
-  const shader = new ParticleShader(shaderOptions);
+  let shader = new ParticleShader(shaderOptions);
   const geometry = getGeometry(shader);
-  geometry.instanceCount = NUM_PARTICLES;
+  geometry.instanceCount = shaderOptions.numOfParticles;
   const pFolder = gui.addFolder('Particles Options');
 
   const onMouseMove = (ev: MouseEvent) => {
@@ -53,13 +53,23 @@ export async function runParticles(gui: GUI): Promise<StopFunc> {
     canvas.addEventListener('mousemove', onMouseMove);
     canvas.addEventListener('mouseleave', onMouseLeave);
 
+    pFolder.add(shaderOptions, 'numOfParticles', 100, 20000);
     pFolder.add(shaderOptions, 'bounce', 0.7, 1);
     pFolder.add(shaderOptions, 'friction', 0, 0.01);
-    pFolder.add(shaderOptions, 'radius', 1, 8);
+    pFolder.add(shaderOptions, 'radius', 1, 4);
     pFolder.add(shaderOptions, 'mouseHeat', 0, 8);
     pFolder.add(shaderOptions, 'wallHeat', 0, 4);
 
-    pFolder.onChange((ev) => shader.setUniformOption(ev.property, ev.value));
+    pFolder.onChange((ev) => {
+      if (ev.property == 'numOfParticles') {
+        shader.dispose();
+        geometry.shader = shader = new ParticleShader(shaderOptions);
+        geometry.instanceCount = shaderOptions.numOfParticles
+      }
+      else {
+        shader.setUniformOption(ev.property, ev.value);
+      }
+    });
   }
 
   const removeGUI = async () => {
@@ -71,7 +81,7 @@ export async function runParticles(gui: GUI): Promise<StopFunc> {
 
   const updateCallback = (device: GPUDevice) => {
     const encoder = device.createCommandEncoder();
-    runComputePass(encoder, device, shader, { x: Math.ceil(NUM_PARTICLES / WORKGROUP_COUNT) });
+    runComputePass(encoder, device, shader, { x: Math.ceil(shaderOptions.numOfParticles / WORKGROUP_COUNT) });
     device.queue.submit([encoder.finish()]);
     shader.swapBuffers();
   }
@@ -84,5 +94,5 @@ export async function runParticles(gui: GUI): Promise<StopFunc> {
 
   addGUI();
 
-  return await runRenderLoop(geometry, updateCallback, stopCallback, { alphaMode: "premultiplied"});
+  return await runRenderLoop(geometry, updateCallback, stopCallback, { alphaMode: "premultiplied" });
 }
