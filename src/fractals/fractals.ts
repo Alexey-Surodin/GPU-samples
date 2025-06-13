@@ -1,15 +1,15 @@
 import { runRenderLoop, StopFunc } from "../gpu/gpu";
 import { getGeometry, getIndexedGeometry } from "../utils";
 import { JuliaShader } from "./julia";
-import { MandelbrothShader } from "./mandelbroth";
+import { MandelbrotShader } from "./mandelbrot";
 
-export function runMandelbroth(): Promise<StopFunc> {
-  const mandelbrothShader = new MandelbrothShader({ scale: 0.1 });
-  const geometry = getIndexedGeometry(mandelbrothShader);
+export function runMandelbrot(): Promise<StopFunc> {
+  const mandelbrotShader = new MandelbrotShader({ scale: 0.1 });
+  const geometry = getIndexedGeometry(mandelbrotShader);
   let scaleDirection = true;
 
   const updateCallback = () => {
-    const scale = mandelbrothShader.scale;
+    const scale = mandelbrotShader.scale;
 
     if (scale > 30000)
       scaleDirection = false;
@@ -17,12 +17,12 @@ export function runMandelbroth(): Promise<StopFunc> {
     if (scale < 0.5)
       scaleDirection = true;
 
-    mandelbrothShader.scale = scale * (scaleDirection ? 1.01 : 0.99);
+    mandelbrotShader.scale = scale * (scaleDirection ? 1.01 : 0.99);
   };
 
   const stopCallback = () => {
     geometry.dispose();
-    mandelbrothShader.dispose();
+    mandelbrotShader.dispose();
   }
 
   return runRenderLoop(geometry, updateCallback, stopCallback);

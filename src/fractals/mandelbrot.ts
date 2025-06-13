@@ -76,17 +76,17 @@ const shaderCode = `
 
   `;
 
-export type MandelbrothShaderOptions = {
+export type MandelbrotShaderOptions = {
   scale?: number,
   offset?: { x: number, y: number },
   maxIterations?: number
 }
 
-export class MandelbrothShader extends Shader {
+export class MandelbrotShader extends Shader {
 
   private uniform: Uniform;
 
-  constructor(options: MandelbrothShaderOptions = {}) {
+  constructor(options: MandelbrotShaderOptions = {}) {
     super(shaderCode);
 
     this.uniform = new Uniform({

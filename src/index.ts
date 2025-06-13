@@ -1,6 +1,6 @@
 /// <reference types="@webgpu/types" />
 
-import { runJulia, runMandelbroth } from "./fractals/fractals";
+import { runJulia, runMandelbrot } from "./fractals/fractals";
 import { runConwayGameC } from "./gameConwayCompute/game";
 import { runConwayGameF } from "./gameConwayFragment/game";
 import { runParticles } from "./particlesCompute/particles";
@@ -19,9 +19,9 @@ const tabs: Tab[] = [];
 
 function init() {
 
-  addButton('Conway on compute shader', () => runConwayGameC());
-  addButton('Conway on fragment shader', () => runConwayGameF());
-  addButton('Mandelbroth', () => runMandelbroth());
+  addButton('Conway using compute shader', () => runConwayGameC());
+  addButton('Conway using fragment shader', () => runConwayGameF());
+  addButton('Mandelbrot', () => runMandelbrot());
   addButton('Julia', () => runJulia());
   addButton('Particles', () => runParticles(gui));
 }
@@ -29,6 +29,7 @@ function init() {
 function addButton(key: string, onClick: () => Promise<StopFunc>): void {
   const tab: Tab = {
     [key]: async () => {
+      gui.title(key);
       tabs.forEach(tab => tab?.stop?.apply(tab));
       tab.stop = await onClick();
     }
