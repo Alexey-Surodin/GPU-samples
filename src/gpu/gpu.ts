@@ -72,7 +72,17 @@ export function runRenderPass(encoder: GPUCommandEncoder, renderPassDescriptor: 
       module: shaderModule,
       entryPoint: geometry.shader.fragmentEntryPoint,
       targets: [{
-        format: format
+        format: format,
+        blend: {
+              color: {
+                srcFactor: 'one',
+                dstFactor: 'one-minus-src-alpha'
+              },
+              alpha: {
+                srcFactor: 'one',
+                dstFactor: 'one-minus-src-alpha'
+              },
+            },
       }]
     }
   });

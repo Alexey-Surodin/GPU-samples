@@ -18,84 +18,69 @@ const shaderCode = `
       spd: vec2f,
     }
 
-    fn calcMouseHeat(particle: Particle) -> Particle {
+    fn calcMouseHeat(p: ptr<function, Particle>) {
       if(options.mouseX < 0 || options.mouseY < 0){
-        return particle;
+        return;
       }
 
-      var dir = particle.pos - vec2f(options.mouseX, options.mouseY);
+      var dir = (*p).pos - vec2f(options.mouseX, options.mouseY);
       var distance = length(dir);
       dir = normalize(dir);
 
-      var spd = particle.spd + dir * options.mouseHeat * max( 1.0 - 0.01 * distance, 0.0);
-
-      return Particle(particle.pos, spd);
+      (*p).spd += dir * options.mouseHeat * max( 1.0 - 0.01 * distance, 0.0);
     }
 
-    fn moveParticle(particle: Particle) -> Particle {
-      var spd = particle.spd;
-      var pos = particle.pos;
-      spd *= (1.0 - options.friction);
-      pos += particle.spd;
-      return Particle(pos, spd);
+    fn moveParticle(p: ptr<function, Particle>) {
+      (*p).spd *= (1.0 - options.friction);
+      (*p).pos += (*p).spd;
     }
 
-    fn calcWallCollision(particle: Particle) -> Particle {
-      var spd = particle.spd;
-      var pos = particle.pos;
+    fn calcWallCollision(p: ptr<function, Particle>) {
 
-      if(pos.x < options.radius){
-        pos.x = options.radius;
-        spd.x = options.wallHeat;
+      if((*p).pos.x < options.radius){
+        (*p).pos.x = options.radius;
+        (*p).spd.x = options.wallHeat;
       }
 
-      if(pos.x > options.width - options.radius){
-        pos.x = options.width - options.radius;
-        spd.x = -options.wallHeat;
+      if((*p).pos.x > options.width - options.radius){
+        (*p).pos.x = options.width - options.radius;
+        (*p).spd.x = -options.wallHeat;
       }
 
-      if(pos.y > options.height - options.radius){
-        pos.y = options.height - options.radius;
-        spd.y = -options.wallHeat;
+      if((*p).pos.y > options.height - options.radius){
+        (*p).pos.y = options.height - options.radius;
+        (*p).spd.y = -options.wallHeat;
       }
 
-      if(pos.y < options.radius){
-        pos.y = options.radius;
-        spd.y = options.wallHeat;
+      if((*p).pos.y < options.radius){
+        (*p).pos.y = options.radius;
+        (*p).spd.y = options.wallHeat;
       }
-      
-      return Particle(pos, spd);
     }
 
-    fn calcParticleCollision(a: Particle, b: Particle, index: u32) -> Particle {
-      var dir = b.pos - a.pos;
+    fn calcParticleCollision(a: ptr<function, Particle>, b: ptr<function, Particle>, index: u32) {
+      var dir = (*b).pos - (*a).pos;
       var l = length(dir);
       var r2 =  2 * options.radius;
 
       if(l < 0.01){
-        return handleStuckParticles(a, index);
+        handleStuckParticles(a, index);
       }
-
-      if(l < r2) {
-        var r = Particle(a.pos, a.spd);
-
+      else if(l < r2) {
         var dn = normalize(dir);
-        var an = dn * dot(a.spd, dn);
-        var at = a.spd - an;
-        var bn = dn * dot(b.spd, dn);
-        var bt = b.spd - bn;
+        var an = dn * dot((*a).spd, dn);
+        var at = (*a).spd - an;
+        var bn = dn * dot((*b).spd, dn);
+        var bt = (*b).spd - bn;
 
-        r.spd = at + options.bounce * bn;
-        r.pos -= dn * options.radius * smoothstep(r2, 0, l ); 
-        return r;
+        (*a).spd = at + options.bounce * bn;
+        (*a).pos -= dn * options.radius * smoothstep(r2, 0, l ); 
       }
-      return a;
     }
 
-    fn handleStuckParticles(a: Particle, index: u32) -> Particle {
+    fn handleStuckParticles(a: ptr<function, Particle>, index: u32) {
       var i = f32(index);
-      var v = vec2f(cos(i), sin(i));
-      return Particle(a.pos + v, a.spd);
+      (*a).pos += vec2f(cos(i), sin(i));
     }
 
     @group(0) @binding(0) var<uniform> options: Options;
@@ -105,8 +90,8 @@ const shaderCode = `
     @compute
     @workgroup_size(64)
     fn computeMain(@builtin(global_invocation_id) id: vec3u) {
-      let length = arrayLength( &particlesIn );
-      let index = u32(id.x);
+      var length = arrayLength( &particlesIn );
+      var index = u32(id.x);
 
       if(index >= length){
         return;
@@ -118,12 +103,12 @@ const shaderCode = `
           continue;
         }
         var b = particlesIn[i];
-        a = calcParticleCollision(a, b, index);
+        calcParticleCollision(&a, &b, index);
       }
 
-      a = moveParticle(a);
-      a = calcMouseHeat(a);
-      a = calcWallCollision(a);
+      moveParticle(&a);
+      calcMouseHeat(&a);
+      calcWallCollision(&a);
 
       particlesOut[index] = a;
     }
@@ -141,8 +126,8 @@ const shaderCode = `
 
     @vertex
     fn vertexMain(input: VertexInput) -> VertexOutput {
-      let particle = particlesIn[input.instance];
-      let screen = vec2f(options.width, options.height);
+      var particle = particlesIn[input.instance];
+      var screen = vec2f(options.width, options.height);
 
       var pos = 2.0 * (particle.pos + input.pos * options.radius) / screen - 1.0;
       var spd = length(particle.spd);
@@ -161,12 +146,8 @@ const shaderCode = `
     @fragment
     fn fragmentMain(input: VertexOutput) -> @location(0) vec4f {
       var d = length(input.uv);
-
-      if(d > 0.99){
-        discard;
-      }
       var alpha = 1.0 - smoothstep(0.9, 1.0, d);
-      return vec4f(input.color, alpha);
+      return vec4f(input.color * alpha, alpha);
     }
 `;
 

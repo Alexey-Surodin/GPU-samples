@@ -84,5 +84,5 @@ export async function runParticles(gui: GUI): Promise<StopFunc> {
 
   addGUI();
 
-  return await runRenderLoop(geometry, updateCallback, stopCallback);
+  return await runRenderLoop(geometry, updateCallback, stopCallback, { alphaMode: "premultiplied"});
 }
