@@ -179,6 +179,7 @@ export class ParticleShader extends Shader {
   uniformOptions: Uniform;
   particlesA: Uniform;
   particlesB: Uniform;
+  bindGroupPairB: { layout: GPUBindGroupLayout; bindGroup: GPUBindGroup; } | null = null;
 
   constructor(options: ParticleShaderOptions) {
     super(shaderCode);
@@ -244,5 +245,14 @@ export class ParticleShader extends Shader {
     const t = this.particlesA.resource;
     this.particlesA.resource = this.particlesB.resource;
     this.particlesB.resource = t;
+
+    const b = this.bindGroupPair;
+    this.bindGroupPair = this.bindGroupPairB;
+    this.bindGroupPairB = b;
+  }
+
+  override dispose(): void {
+    super.dispose();
+    this.bindGroupPairB = null;
   }
 }

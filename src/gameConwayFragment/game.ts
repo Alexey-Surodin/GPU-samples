@@ -1,6 +1,6 @@
 import { prepareGpu, runRenderLoop, StopFunc } from "../gpu/gpu";
 import { getGeometry } from "../utils";
-import { ParticleFragmentShader } from "./shader";
+import { ConwayFShader } from "./shader";
 
 export async function runConwayGameF(): Promise<StopFunc> {
   const { context } = await prepareGpu({ usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC });
@@ -17,7 +17,7 @@ export async function runConwayGameF(): Promise<StopFunc> {
     array[i++] = 255;
   }
 
-  const shader = new ParticleFragmentShader({
+  const shader = new ConwayFShader({
     array: array,
     height: h,
     width: w,

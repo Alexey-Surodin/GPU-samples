@@ -24,7 +24,7 @@ export abstract class Resource<T extends GPUBindingResource> {
   abstract getResource(device: GPUDevice): T;
   abstract updateResource(device: GPUDevice): void;
 
-  update(device: GPUDevice): { layout: GPUBindGroupLayoutEntry, resource: GPUBindingResource } {
+  getResourceBindPair(device: GPUDevice): { layout: GPUBindGroupLayoutEntry, resource: GPUBindingResource } {
     if (this.needsUpdate)
       this.updateResource(device);
 

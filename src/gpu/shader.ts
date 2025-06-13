@@ -4,6 +4,7 @@ export { Uniform };
 export class Shader {
 
   shaderModule: GPUShaderModule | null = null;
+  bindGroupPair: { layout: GPUBindGroupLayout, bindGroup: GPUBindGroup } | null = null;
 
   code: string;
   label: string = '';
@@ -26,13 +27,50 @@ export class Shader {
   `;
   }
 
-  compile(device: GPUDevice): GPUShaderModule {
-    this.shaderModule = device.createShaderModule({
-      label: this.label,
-      code: this.code
-    });
+  getShaderModule(device: GPUDevice): GPUShaderModule {
+    if (!this.shaderModule) {
+      this.shaderModule = device.createShaderModule({
+        label: this.label,
+        code: this.code
+      });
+    }
 
     return this.shaderModule;
+  }
+
+  getBindGroupPair(device: GPUDevice): { layout: GPUBindGroupLayout, bindGroup: GPUBindGroup } {
+    if (!this.bindGroupPair) {
+      const layoutEntries: GPUBindGroupLayoutEntry[] = [];
+      const bindEntries: GPUBindGroupEntry[] = [];
+
+      for (const res of this.resources) {
+        const { layout, resource } = res.getResourceBindPair(device);
+        layoutEntries.push(layout);
+        bindEntries.push({
+          binding: layout.binding,
+          resource: resource,
+        });
+      }
+
+      const layout = device.createBindGroupLayout({
+        label: this.label + "uniform layout",
+        entries: layoutEntries,
+      });
+
+      const bindGroup = device.createBindGroup({
+        label: this.label + "bind group",
+        layout: layout,
+        entries: bindEntries,
+      });
+      this.bindGroupPair = { layout, bindGroup };
+    }
+
+    for (const res of this.resources) {
+      if (res.needsUpdate)
+        res.updateResource(device);
+    }
+
+    return this.bindGroupPair;
   }
 
   dispose(): void {
@@ -41,38 +79,12 @@ export class Shader {
 
     this.resources = [];
     this.shaderModule = null;
+    this.bindGroupPair = null;
   }
-}
-
-export function prepareShaderBindGroup(device: GPUDevice, shader: Shader): { layout: GPUBindGroupLayout, bindGroup: GPUBindGroup } {
-  const layoutEntries: GPUBindGroupLayoutEntry[] = [];
-  const bindEntries: GPUBindGroupEntry[] = [];
-
-  for (const res of shader.resources) {
-    const { layout, resource } = res.update(device);
-    layoutEntries.push(layout);
-    bindEntries.push({
-      binding: layout.binding,
-      resource: resource,
-    });
-  }
-
-  const layout = device.createBindGroupLayout({
-    label: shader.label + "uniform layout",
-    entries: layoutEntries,
-  });
-
-  const bindGroup = device.createBindGroup({
-    label: shader.label + "bind group",
-    layout: layout,
-    entries: bindEntries,
-  });
-
-  return { layout, bindGroup };
 }
 
 export function prepareShader(device: GPUDevice, shader: Shader): { shaderModule: GPUShaderModule, layout: GPUBindGroupLayout, bindGroup: GPUBindGroup } {
-  const shaderModule = shader.shaderModule ?? shader.compile(device);
-  const { layout, bindGroup } = prepareShaderBindGroup(device, shader);
-  return { shaderModule, layout, bindGroup }
+  const shaderModule = shader.getShaderModule(device);
+  const bindGroup = shader.getBindGroupPair(device);
+  return { shaderModule, ...bindGroup }
 }

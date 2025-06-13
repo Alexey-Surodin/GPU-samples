@@ -1,6 +1,6 @@
 import { Shader, Uniform } from "../gpu/shader";
 
-const cellShaderCode = `
+const shaderCode = (workgroupSize: number) => `
     struct VertexInput {
       @location(0) pos: vec2f,
       @builtin(instance_index) instance: u32,
@@ -13,6 +13,7 @@ const cellShaderCode = `
 
     @group(0) @binding(0) var<uniform> grid: vec2f;
     @group(0) @binding(1) var<storage> cellStateIn: array<u32>;
+    @group(0) @binding(2) var<storage, read_write> cellStateOut: array<u32>;
 
     @vertex
     fn vertexMain(input: VertexInput) -> VertexOutput {
@@ -29,24 +30,60 @@ const cellShaderCode = `
       return output;
     }
 
-    struct FragInput {
-      @location(0) cell: vec2f,
-    };
-
     @fragment
-    fn fragmentMain(input: FragInput) -> @location(0) vec4f {
+    fn fragmentMain(input: VertexOutput) -> @location(0) vec4f {
       let c = input.cell / grid;
       return vec4f(c, 1 -c.y, 1);
     }
-  `
 
-export class CellShader extends Shader {
+    fn cellIndex(cell: vec2u) -> u32 {
+      return (cell.y % u32(grid.y)) * u32(grid.x) +
+       (cell.x % u32(grid.x));
+    }
+
+    fn cellActive(x: u32, y: u32) -> u32 {
+      return cellStateIn[cellIndex(vec2(x, y))];
+    }
+
+    fn getNeighbors(cell: vec3u) -> u32 {
+      return cellActive(cell.x+1, cell.y+1) +
+             cellActive(cell.x+1, cell.y) +
+             cellActive(cell.x+1, cell.y-1) +
+             cellActive(cell.x, cell.y-1) +
+             cellActive(cell.x-1, cell.y-1) +
+             cellActive(cell.x-1, cell.y) +
+             cellActive(cell.x-1, cell.y+1) +
+             cellActive(cell.x, cell.y+1);
+    }
+
+    @compute
+    @workgroup_size(${workgroupSize}, ${workgroupSize})
+    fn computeMain(@builtin(global_invocation_id) cell: vec3u) {
+      let i = cellIndex(cell.xy);
+      let activeNeighbors = getNeighbors(cell);
+
+      // Conway's game of life rules:
+      switch activeNeighbors {
+        case 2: { // Active cells with 2 neighbors stay active.
+          cellStateOut[i] = cellStateIn[i];
+        }
+        case 3: { // Cells with 3 neighbors become or stay active.
+          cellStateOut[i] = 1;
+        }
+        default: { // Cells with < 2 or > 3 neighbors become inactive.
+          cellStateOut[i] = 0;
+        }
+      }
+    }`;
+
+export class ConwayCShader extends Shader {
   private uniform: Uniform;
   private cellStorageA: Uniform;
   private cellStorageB: Uniform;
+  private bindGroupPairB: { layout: GPUBindGroupLayout; bindGroup: GPUBindGroup; } | null = null;
 
-  constructor(gridSize: number) {
-    super(cellShaderCode);
+  constructor(workgroupSize: number, gridSize: number) {
+    super(shaderCode(workgroupSize));
 
     this.uniform = new Uniform({
       label: "Grid Uniforms",
@@ -91,57 +128,14 @@ export class CellShader extends Shader {
     const t = this.cellStorageA.resource;
     this.cellStorageA.resource = this.cellStorageB.resource;
     this.cellStorageB.resource = t;
+
+    const b = this.bindGroupPair;
+    this.bindGroupPair = this.bindGroupPairB;
+    this.bindGroupPairB = b;
   }
-}
 
-const computeShaderCode = (workgroupSize: number) => `
-    @group(0) @binding(0) var<uniform> grid: vec2f;
-    @group(0) @binding(1) var<storage> cellStateIn: array<u32>;
-    @group(0) @binding(2) var<storage, read_write> cellStateOut: array<u32>;
-
-    fn cellIndex(cell: vec2u) -> u32 {
-      return (cell.y % u32(grid.y)) * u32(grid.x) +
-       (cell.x % u32(grid.x));
-    }
-
-    fn cellActive(x: u32, y: u32) -> u32 {
-      return cellStateIn[cellIndex(vec2(x, y))];
-    }
-
-    fn getNeighbors(cell: vec3u) -> u32 {
-      return cellActive(cell.x+1, cell.y+1) +
-             cellActive(cell.x+1, cell.y) +
-             cellActive(cell.x+1, cell.y-1) +
-             cellActive(cell.x, cell.y-1) +
-             cellActive(cell.x-1, cell.y-1) +
-             cellActive(cell.x-1, cell.y) +
-             cellActive(cell.x-1, cell.y+1) +
-             cellActive(cell.x, cell.y+1);
-    }
-
-    @compute
-    @workgroup_size(${workgroupSize}, ${workgroupSize})
-    fn computeMain(@builtin(global_invocation_id) cell: vec3u) {
-      let i = cellIndex(cell.xy);
-      let activeNeighbors = getNeighbors(cell);
-
-      // Conway's game of life rules:
-      switch activeNeighbors {
-        case 2: { // Active cells with 2 neighbors stay active.
-          cellStateOut[i] = cellStateIn[i];
-        }
-        case 3: { // Cells with 3 neighbors become or stay active.
-          cellStateOut[i] = 1;
-        }
-        default: { // Cells with < 2 or > 3 neighbors become inactive.
-          cellStateOut[i] = 0;
-        }
-      }
-    }`;
-
-export class ComputeShader extends Shader {
-  constructor(workgroupSize: number, cellShader: CellShader) {
-    super(computeShaderCode(workgroupSize));
-    this.resources = cellShader.resources;
+  override dispose(): void {
+    super.dispose();
+    this.bindGroupPairB = null;
   }
 }

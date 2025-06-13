@@ -45,19 +45,19 @@ const shaderCode = `
     }
 `
 
-export type ParticleFragmentOptions = {
+export type ConwayFShaderOptions = {
   width: number,
   height: number,
   array: TypedArray,
   textureFormat: GPUTextureFormat,
 }
 
-export class ParticleFragmentShader extends Shader {
+export class ConwayFShader extends Shader {
   uniform: Uniform;
   sampler: Sampler;
   texture: Texture;
 
-  constructor(options: ParticleFragmentOptions) {
+  constructor(options: ConwayFShaderOptions) {
     super(shaderCode);
 
     this.uniform = new Uniform({
